@@ -16,6 +16,7 @@
 // If diagnostics don't pass or assembly is incomplete then the code will either straight up not work (best case)
 // Or some physical/electrical components are gonna get nuked (worst case)
 #define DIAGNOSTIC_MODE 1
+#define JOYSTICK_MODE 1
 
 const int steps_per_rev = 200;
 
@@ -27,11 +28,13 @@ unsigned long int time_f = 0;
 bool first_loop = true;
 
 void setup() {
-  motor_init(4, 5, 6, 7, steps_per_rev);
+  motor_init(2, 3, 4, 5, steps_per_rev);
   encoder_init(0, 1);
   diag_init();
   pid_init(KP, KI, KD, SPD_MIN, SPD_MAX);
   pid_reset_integrator();
+
+  pinMode(A0, INPUT);
 }
 
 #if DIAGNOSTIC_MODE == 0
@@ -47,9 +50,31 @@ void loop() {
 }
 #endif
 
-#if DIAGNOSTIC_MODE == 1
+#if DIAGNOSTIC_MODE == 1 && JOYSTICK_MODE == 0
 void loop()
 {
-  test_motor_rev();
+  test_motor_cmplx();
+}
+#endif
+
+#if DIAGNOSTIC_MODE == 1 && JOYSTICK_MODE == 1
+void loop() {
+    if (analogRead(A0) >= 820)
+    {
+      motor_set(290 * (analogRead(A0) - 820) / 203);
+      Serial.print("Speed: ");
+      Serial.print(290 * (analogRead(A0) - 820) / 203);
+      Serial.print(" Read: ");
+      Serial.println(analogRead(A0));
+    }
+    else
+    {
+      motor_set(290 * (analogRead(A0) - 820) / 820);
+      Serial.print("Speed: ");
+      Serial.print(290 * (analogRead(A0) - 820) / 820);
+      Serial.print(" Read: ");
+      Serial.println(analogRead(A0));
+    }
+
 }
 #endif
